@@ -1,0 +1,92 @@
+---
+name: Bug Report
+description: Report a bug with the Homebrew formula
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a bug. Please fill out the
+        sections below so we can reproduce and fix the issue.
+
+  - type: input
+    id: formula-version
+    attributes:
+      label: Formula Version
+      description: Version in the formula (`url` tag version)
+      placeholder: "0.6.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      options:
+        - macOS (Apple Silicon)
+        - macOS (Intel)
+        - Linux (Homebrew)
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: homebrew-version
+    attributes:
+      label: Homebrew Version
+      description: Output of `brew --version`
+      placeholder: "Homebrew 4.5.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: Issue Type
+      options:
+        - Installation failure
+        - Test failure (brew test)
+        - Audit failure (brew audit)
+        - Bottle mismatch
+        - Livecheck not detecting version
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened? What did you expect instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: |
+        Minimal steps to trigger the bug. Include the
+        command you ran and any error output.
+      placeholder: |
+        1. brew install belt/distill/distill-strip-ansi
+        2. Expected: successful install
+        3. Got: ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: brew-config
+    attributes:
+      label: Brew Config
+      description: |
+        Output of `brew config` (helps diagnose environment issues).
+      render: text
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: |
+        Anything else that might help: error logs, related
+        issues, Xcode version, Rust toolchain version.
