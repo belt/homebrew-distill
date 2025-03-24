@@ -1,0 +1,169 @@
+# Project-scoped tool versions — managed by mise
+#
+# Install: mise install
+# Verify:  mise ls
+#
+# ⚠ Platform note: This is a Homebrew tap. Formula validation
+# requires macOS (or Linux with Linuxbrew). Tasks will check
+# for `brew` and exit with guidance if unavailable.
+[tools]
+
+[env]
+NO_COLOR = "1"                    # suppress ANSI in any tool that respects this
+HOMEBREW_NO_AUTO_UPDATE = "1"     # never auto-update brew during tasks
+HOMEBREW_NO_INSTALL_CLEANUP = "1" # don't gc bottles after install
+HOMEBREW_NO_ENV_HINTS = "1"       # suppress "you can set..." noise
+HOMEBREW_NO_ANALYTICS = "1"       # no telemetry
+
+# ── Local CI parity ──────────────────────────────────────────────
+# Mirrors .github/workflows/tests.yml pipeline structure.
+# Run before push: mise run tap:run-ci
+#
+# Pipeline ordering (matches CI job graph):
+#
+#   TIER 1: FAST CHECKS (parallel — no brew required)
+#     tap:check-syntax    rubocop with homebrew cops
+#     tap:check-spelling  cspell
+#
+#   TIER 2: FORMULA VALIDATION (sequential — cargo, no brew)
+#     tap:build-formula   cargo build at formula version
+#     tap:run-tests       formula test assertions
+#
+#   TIER 3: BREW VALIDATION (requires brew — lightweight metadata only)
+#     tap:run-audit       brew audit --strict
+#
+#   RELEASE PREP (manual — not part of CI gate)
+#     tap:check-livecheck brew livecheck
+#     tap:fetch-upstream  curl + sha256sum
+#
+# Principle: brew is used ONLY for formula policy validation and
+# publishing. Build and test use system cargo directly.
+
+# =========================================================================
+# TIER 1: FAST CHECKS (parallel — no brew required)
+# =========================================================================
+
+# Usage: mise run tap:check-syntax
+[tasks."tap:check-syntax"]
+description = "Lint formula Ruby syntax (rubocop with Homebrew cops)"
+run = './bin/check-syntax.sh'
+
+# Usage: mise run tap:check-spelling
+[tasks."tap:check-spelling"]
+description = "Check spelling across project files"
+run = '''
+set -e
+if command -v cspell >/dev/null 2>&1; then
+  cspell --no-progress "**/*.{rb,md,yml,yaml}"
+  echo "ok: no spelling errors"
+elif command -v npx >/dev/null 2>&1; then
+  npx --yes cspell --no-progress "**/*.{rb,md,yml,yaml}"
+  echo "ok: no spelling errors"
+else
+  echo "skip: cspell not available (npm i -g cspell)"
+fi
+'''
+
+# =========================================================================
+# TIER 2: FORMULA VALIDATION (sequential — cargo, no brew)
+# =========================================================================
+
+# Usage: mise run tap:build-formula
+[tasks."tap:build-formula"]
+description = "Build upstream source at formula version (cargo, no brew dep overhead)"
+run = './bin/build-formula.sh'
+
+# Usage: mise run tap:build-head
+# Builds from upstream git main — useful for validating formula
+# install/test logic against unreleased code before bumping the
+# formula url+sha256.
+[tasks."tap:build-head"]
+description = "Build upstream HEAD (pre-release validation)"
+run = './bin/build-formula.sh HEAD'
+
+# Usage: mise run tap:run-tests
+# depends on build — binaries must exist before testing
+[tasks."tap:run-tests"]
+description = "Run formula test assertions against built binaries"
+depends = ["tap:build-formula"]
+run = './bin/test-formula-assertions.sh'
+
+# =========================================================================
+# TIER 3: BREW VALIDATION (lightweight metadata — no dep installs)
+# =========================================================================
+
+# Usage: mise run tap:run-audit
+[tasks."tap:run-audit"]
+description = "Strict audit of formula (catches policy violations before CI)"
+run = '''
+set -e
+if ! command -v brew >/dev/null 2>&1; then
+  echo "skip: brew not found — run on macOS or install Linuxbrew"
+  echo "  https://brew.sh"
+  exit 0
+fi
+brew audit --strict --online --formula belt/distill/distill-strip-ansi
+echo "ok: audit passed"
+'''
+
+# =========================================================================
+# CI GATE (full pipeline — tier 1 parallel, tier 2 sequential)
+# =========================================================================
+
+# Usage: mise run tap:run-ci
+#
+# Dependency graph (mise runs siblings in parallel):
+#
+#   tap:check-syntax ──┐
+#   tap:check-spelling─┤  (parallel — fast, no deps)
+#   tap:build-formula ─→ tap:run-tests  (sequential chain)
+#   tap:run-audit ─────┘  (parallel with above)
+#
+[tasks."tap:run-ci"]
+description = "Full local CI gate (mirrors GitHub CI before push)"
+depends = ["tap:check-syntax", "tap:check-spelling", "tap:run-tests", "tap:run-audit"]
+
+# =========================================================================
+# RELEASE PREP (manual — not part of CI gate)
+# =========================================================================
+
+# Usage: mise run tap:check-livecheck
+[tasks."tap:check-livecheck"]
+description = "Verify livecheck detects upstream version"
+run = '''
+set -e
+if ! command -v brew >/dev/null 2>&1; then
+  echo "skip: brew not found — run on macOS or install Linuxbrew"
+  echo "  https://brew.sh"
+  exit 0
+fi
+brew livecheck belt/distill/distill-strip-ansi
+'''
+
+# Usage: mise run tap:fetch-upstream
+[tasks."tap:fetch-upstream"]
+description = "Fetch latest upstream tarball and compute sha256 for version bump"
+run = './bin/fetch-upstream.sh'
+
+# =========================================================================
+# UTILITIES
+# =========================================================================
+
+# Usage: mise run tap:remove-formula
+[tasks."tap:remove-formula"]
+description = "Remove formula (cleanup after local testing)"
+run = '''
+set -e
+if ! command -v brew >/dev/null 2>&1; then
+  echo "skip: brew not found — run on macOS or install Linuxbrew"
+  echo "  https://brew.sh"
+  exit 0
+fi
+brew uninstall --force distill-strip-ansi 2>/dev/null || true
+echo "ok: formula uninstalled"
+'''
+
+# Usage: mise run tap:rebuild-formula
+[tasks."tap:rebuild-formula"]
+description = "Clean rebuild: remove → build → test → audit"
+depends = ["tap:remove-formula", "tap:build-formula", "tap:run-tests", "tap:run-audit"]
