@@ -1,0 +1,57 @@
+# Homebrew pr-pull — merges bottles from test-bot into the tap.
+#
+# Triggered by labeling a PR with `pr-pull` after CI is green.
+# Uses pull_request_target intentionally — brew pr-pull needs
+# write access and does NOT checkout/execute PR code.
+#
+# Homebrew actions pinned to SHA from main branch.
+---
+name: brew pr-pull
+
+on:
+  pull_request_target:
+    types:
+      - labeled
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  pr-pull:
+    if: contains(github.event.pull_request.labels.*.name, 'pr-pull')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      checks: read
+      contents: write
+      issues: read
+      pull-requests: write
+    steps:
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@59e6b20d96df1a3c9ccb0aa402676e01a4cc6ff3  # main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up git
+        uses: Homebrew/actions/git-user-config@59e6b20d96df1a3c9ccb0aa402676e01a4cc6ff3  # main
+
+      - name: Pull bottles
+        env:
+          HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PULL_REQUEST: ${{ github.event.pull_request.number }}
+        run: brew pr-pull --debug --tap="$GITHUB_REPOSITORY" "$PULL_REQUEST"
+
+      - name: Push commits
+        uses: Homebrew/actions/git-try-push@59e6b20d96df1a3c9ccb0aa402676e01a4cc6ff3  # main
+        with:
+          branch: main
+
+      - name: Delete branch
+        if: github.event.pull_request.head.repo.fork == false
+        env:
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: git push --delete origin "$BRANCH"
