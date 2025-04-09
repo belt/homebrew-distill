@@ -1,0 +1,18 @@
+# Dependabot — keeps SHA-pinned Actions current.
+#
+# Dependabot resolves new SHAs automatically when tags move,
+# so SHA-pinned actions stay up to date without manual work.
+#
+# Config: https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference
+---
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    commit-message:
+      prefix: "ci(deps): "
+    open-pull-requests-limit: 5
+    labels:
+      - "ci"
