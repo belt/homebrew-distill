@@ -1,8 +1,8 @@
 class DistillStripAnsi < Formula
-  desc "Strip/mutate/distill ANSI escape sequences, echoback/other mitigation"
+  desc "Strip, mutate, distill ANSI escape sequences, echoback/other mitigation"
   homepage "https://github.com/belt/distill-strip-ansi"
-  url "https://github.com/belt/distill-strip-ansi/archive/refs/tags/v0.5.1.tar.gz"
-  sha256 "b02b76e044d33f946c838642dde983d82a5505c157f33d58899fd8a6cb2ad5ff"
+  url "https://github.com/belt/distill-strip-ansi/archive/refs/tags/v0.5.2.tar.gz"
+  sha256 "7cb719f7a5305b6785304cc5aa4a6ab408e5306d1b84c3728363ae633e1e4e33"
   license any_of: ["Apache-2.0", "MIT"]
   head "https://github.com/belt/distill-strip-ansi.git", branch: "main"
 
@@ -30,5 +30,14 @@ class DistillStripAnsi < Formula
 
     assert_match version.to_s,
                  shell_output("#{bin}/strip-ansi --version")
+
+    # distill-ansi: color depth reduction (truecolor → mono strips color,
+    # keeps text and styles like bold/reset).
+    color_input = "\e[1m\e[38;2;255;0;0mred\e[0m plain"
+    mono_output = pipe_output("#{bin}/distill-ansi --color-depth mono", color_input)
+    assert_equal "\e[1mred\e[0m plain", mono_output.strip
+
+    assert_match version.to_s,
+                 shell_output("#{bin}/distill-ansi --version")
   end
 end
