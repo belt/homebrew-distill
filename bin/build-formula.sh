@@ -5,12 +5,14 @@
 #   ./bin/build-formula.sh HEAD   # build from main branch
 set -euo pipefail
 
-if [ "${1:-}" = "HEAD" ]; then
+if [[ "${1:-}" = "HEAD" ]]
+then
   CLONE_ARGS=(--quiet --depth 1)
   LABEL="HEAD"
 else
   VERSION=$(grep -oP '(?<=refs/tags/v)[0-9]+\.[0-9]+\.[0-9]+' Formula/distill-strip-ansi.rb | head -1)
-  if [ -z "$VERSION" ]; then
+  if [[ -z "${VERSION}" ]]
+  then
     echo "err: could not extract version from formula" >&2
     exit 1
   fi
@@ -19,13 +21,13 @@ else
 fi
 
 WORKDIR=$(mktemp -d)
-trap 'rm -rf "$WORKDIR"' EXIT
+trap 'rm -rf "${WORKDIR}"' EXIT
 
 echo "building ${LABEL}..."
 git clone "${CLONE_ARGS[@]}" \
-  https://github.com/belt/distill-strip-ansi.git "$WORKDIR"
+  https://github.com/belt/distill-strip-ansi.git "${WORKDIR}"
 # --features distill-ansi-cli mirrors the formula's `install` block —
 # see test-formula-assertions.sh for why this is required.
 cargo build --quiet --release --features distill-ansi-cli \
-  --manifest-path "$WORKDIR/Cargo.toml"
+  --manifest-path "${WORKDIR}/Cargo.toml"
 echo "ok: ${LABEL} built successfully"
