@@ -1,8 +1,8 @@
 class DistillStripAnsi < Formula
   desc "Strip, mutate, distill ANSI escape sequences, echoback/other mitigation"
   homepage "https://github.com/belt/distill-strip-ansi"
-  url "https://github.com/belt/distill-strip-ansi/archive/refs/tags/v0.6.1.tar.gz"
-  sha256 "c5d26889d77434ac3e719d64cd75f1f7084261d813f2149eecba54a8be2ec878"
+  url "https://github.com/belt/distill-strip-ansi/archive/refs/tags/v0.7.1.tar.gz"
+  sha256 "039ad4b9f832a5effbd0103dfdc0cf17d9f67ac4296e1686772d0945628f12fd"
   license any_of: ["Apache-2.0", "MIT"]
   head "https://github.com/belt/distill-strip-ansi.git", branch: "main"
 
@@ -14,7 +14,13 @@ class DistillStripAnsi < Formula
   depends_on "rust" => :build
 
   def install
-    system "cargo", "install", *std_cargo_args
+    # distill-ansi-cli is required to build the distill-ansi binary
+    # (Cargo.toml: `[[bin]] name = "distill-ansi" required-features =
+    # ["distill-ansi-cli"]`) — it is not in the crate's default feature
+    # set, so cargo install needs it named explicitly. Without this,
+    # `cargo install` only produces strip-ansi and the test block's
+    # `distill-ansi --version` assertion fails.
+    system "cargo", "install", *std_cargo_args, "--features", "distill-ansi-cli"
   end
 
   test do

@@ -24,5 +24,8 @@ trap 'rm -rf "$WORKDIR"' EXIT
 echo "building ${LABEL}..."
 git clone "${CLONE_ARGS[@]}" \
   https://github.com/belt/distill-strip-ansi.git "$WORKDIR"
-cargo build --quiet --release --manifest-path "$WORKDIR/Cargo.toml"
+# --features distill-ansi-cli mirrors the formula's `install` block —
+# see test-formula-assertions.sh for why this is required.
+cargo build --quiet --release --features distill-ansi-cli \
+  --manifest-path "$WORKDIR/Cargo.toml"
 echo "ok: ${LABEL} built successfully"
