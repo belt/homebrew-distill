@@ -1,8 +1,8 @@
 class DistillStripAnsi < Formula
   desc "Strip, mutate, distill ANSI escape sequences, echoback/other mitigation"
   homepage "https://github.com/belt/distill-strip-ansi"
-  url "https://github.com/belt/distill-strip-ansi/archive/refs/tags/v0.7.1.tar.gz"
-  sha256 "039ad4b9f832a5effbd0103dfdc0cf17d9f67ac4296e1686772d0945628f12fd"
+  url "https://github.com/belt/distill-strip-ansi/archive/refs/tags/v0.7.2.tar.gz"
+  sha256 "670de9e464c5ea2c2938b7ab57e47eb238833b54013f6451dc0689fe15e36124"
   license any_of: ["Apache-2.0", "MIT"]
   head "https://github.com/belt/distill-strip-ansi.git", branch: "main"
 
