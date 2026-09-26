@@ -39,9 +39,9 @@ class DistillStripAnsi < Formula
 
     # distill-ansi: color depth reduction (truecolor → mono strips color,
     # keeps text and styles like bold/reset).
-    color_input = "\e[1m\e[38;2;255;0;0mred\e[0m plain"
+    color_input = "\e[1m\e[38;2;255;0;0m" + "red\e[0m plain"
     mono_output = pipe_output("#{bin}/distill-ansi --color-depth mono", color_input)
-    assert_equal "\e[1mred\e[0m plain", mono_output.strip
+    assert_equal "\e[1m" + "red\e[0m plain", mono_output.strip
 
     assert_match version.to_s,
                  shell_output("#{bin}/distill-ansi --version")
