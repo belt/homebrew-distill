@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Lint formula Ruby files with rubocop using Homebrew's cops.
-# Falls back to basic ruby -c syntax check if rubocop unavailable.
+# Lint formula Ruby files using Homebrew's style rules.
+# Falls back to basic ruby -c syntax check if Homebrew is unavailable.
 set -euo pipefail
 
-if command -v rubocop >/dev/null 2>&1
+if command -v brew >/dev/null 2>&1
 then
-  rubocop --format quiet Formula/*.rb
+  brew style Formula/*.rb
   echo "ok: tap syntax valid"
 elif command -v ruby >/dev/null 2>&1
 then
@@ -13,8 +13,8 @@ then
   do
     ruby -c "${f}" >/dev/null
   done
-  echo "ok: ruby syntax valid (rubocop not available for full lint)"
+  echo "ok: ruby syntax valid (Homebrew not available for full lint)"
 else
-  echo "skip: neither rubocop nor ruby found"
+  echo "skip: neither Homebrew nor Ruby found"
   exit 0
 fi
