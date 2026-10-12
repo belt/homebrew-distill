@@ -86,6 +86,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
     timeout-minutes: 60
+    env:
+      GOPROXY: https://proxy.golang.org|direct
     permissions:
       actions: read
       checks: read
